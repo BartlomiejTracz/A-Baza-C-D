@@ -88,8 +88,12 @@ export const View = {
         `).join('');
 
         return `
-        <div style="display:flex; justify-content:space-between">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
+            <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${window.app.getThemeIcon()}</button>
             <span>Pytanie ${current}/${total} ${isMulti ? '(Wielokrotny wybór)' : ''}</span>
+            <button class="btn" style="background:#6c757d; padding:8px 12px; font-size:14px" onclick="window.app.goHome()">Wyjdź</button>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-bottom:10px">
             <span>Punkty: ${quizSession.score}</span>
         </div>
         <div class="card"><h3>${escapeHTML(q.text)}</h3></div>

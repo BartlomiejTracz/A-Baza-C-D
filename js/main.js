@@ -194,7 +194,7 @@ const Controller = {
         };
         reader.readAsText(file);
     },
-    
+
     handleFileImport: (input) => {
         const file = input.files[0];
         if (!file) return;
@@ -223,7 +223,7 @@ const Controller = {
     },
 
     renderCurrentQuestion: () => {
-        appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.question(currentSession);
+        appContainer.innerHTML = View.question(currentSession);
     },
 
     toggleSelection: (index) => {
