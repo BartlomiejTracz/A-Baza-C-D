@@ -1,0 +1,160 @@
+/* 1. RESET I BAZA */
+* {
+    box-sizing: border-box; /* Kluczowe: padding nie powiększa elementów */
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #eef2f5; /* Jasnoszary, przyjemny dla oka */
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+/* 2. KONTENER APLIKACJI (Symulacja telefonu na PC) */
+#app {
+    max-width: 600px; /* Na PC nie będzie szersze niż tablet */
+    margin: 0 auto;   /* Wyśrodkowanie na ekranie */
+}
+
+h1 { font-size: 24px; text-align: center; margin-bottom: 20px; color: #2c3e50; }
+h3 { font-size: 18px; margin-top: 0; color: #34495e; }
+
+/* 3. KARTY (Pytania, Przedmioty) */
+.card {
+    background: #fff;
+    border-radius: 12px; /* Zaokrąglone rogi */
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05); /* Delikatny cień */
+    cursor: pointer; /* Żeby na PC było widać, że klikalne */
+    transition: transform 0.2s; /* Lekka animacja przy dotyku */
+}
+
+.card:active {
+    transform: scale(0.98); /* Efekt wciśnięcia */
+}
+
+/* 4. PRZYCISKI (Duże pod palec!) */
+.btn {
+    display: block;
+    width: 100%;
+    padding: 16px;       /* Duże pole dotyku */
+    margin: 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.2s;
+}
+
+/* Przycisk domyślny (Nawigacja) */
+.btn {
+    background-color: #3498db;
+    color: white;
+}
+.btn:hover { background-color: #2980b9; }
+
+/* 5. ODPOWIEDZI (Specyficzny styl) */
+.btn-answer {
+    background-color: #f8f9fa; /* Jasne tło */
+    color: #333;               /* Ciemny tekst */
+    border: 1px solid #ddd;
+    text-align: left;          /* Odpowiedzi czytamy od lewej */
+    font-weight: normal;
+}
+
+.btn-answer:active { background-color: #e2e6ea; }
+
+/* Kolory stanów (Poprawna/Błędna) */
+.btn-correct {
+    background-color: #2ecc71 !important; /* Soczysta zieleń */
+    color: white !important;
+    border-color: #2ecc71 !important;
+}
+
+.btn-wrong {
+    background-color: #e74c3c !important; /* Czerwień */
+    color: white !important;
+    border-color: #e74c3c !important;
+}
+
+/* Wyłączenie klikania po zaznaczeniu */
+.btn:disabled {
+    opacity: 0.9;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* 6. PASEK POSTĘPU */
+.stats-bar {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.stats-fill {
+    height: 100%;
+    background: #2ecc71;
+    transition: width 0.5s ease-in-out; /* Płynne ładowanie paska */
+}
+
+/* 7. POMOCNICZE */
+/* Nagłówek w trakcie quizu (licznik po lewej, punkty po prawej) */
+div[style*="display:flex"] {
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+input[type="radio"] {
+    transform: scale(1.5);
+    margin-right: 10px;
+}
+
+.card-home {
+    position: relative; /* Żeby można było pozycjonować przycisk */
+}
+.btn-delete {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.theme-toggle-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border: 2px solid #ddd;
+    color: #333;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
