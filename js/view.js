@@ -8,7 +8,7 @@ export const View = {
         
         const isCustom = subject.id.toString().startsWith('custom_') || subject.id.toString().startsWith('import_');
         const deleteBtn = isCustom 
-            ? `<button class="btn-delete" onclick="event.stopPropagation(); window.app.deleteSubject('${subject.id}')">🗑</button>` 
+            ? `<button class="btn-home-delete" onclick="event.stopPropagation(); window.app.deleteSubject('${subject.id}')">🗑</button>` 
             : '';
 
         return `
@@ -130,15 +130,15 @@ export const View = {
 
     draftItem(question, index) {
         return `
-        <div class="card" style="padding:10px; background:#f8f9fa; border:1px solid #ddd">
+        <div class="card draft-item" style="padding:10px;">
             <div style="font-weight:bold; margin-bottom:5px">${index + 1}. ${question.text}</div>
-            <div style="font-size:0.9em; color:#666">
+            <div style="font-size:0.9em;">
                 Odp: ${question.answers.join(', ')} <br>
-                Poprawna: <strong style="color:green">${question.answers[question.correct]}</strong>
+                Poprawna: <strong class="correct-answer">${question.answers[question.correct]}</strong>
             </div>
             <div style="margin-top:10px; display:flex; gap:10px">
-                <button style="padding:5px 10px; background:#ffc107; border:none; border-radius:4px" onclick="window.app.editDraftQuestion(${index})">Edytuj</button>
-                <button style="padding:5px 10px; background:#dc3545; color:white; border:none; border-radius:4px" onclick="window.app.deleteDraftQuestion(${index})">Usuń</button>
+                <button class="btn-edit" onclick="window.app.editDraftQuestion(${index})">Edytuj</button>
+                <button class="btn-delete" onclick="window.app.deleteDraftQuestion(${index})">Usuń</button>
             </div>
         </div>`;
     }

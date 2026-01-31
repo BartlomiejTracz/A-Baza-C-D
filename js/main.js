@@ -30,7 +30,11 @@ const Controller = {
         }
 
         themeLink.setAttribute('href', newTheme);
-        Controller.goHome(); 
+        
+        const themeBtn = document.querySelector('.theme-toggle-btn');
+        if (themeBtn) {
+            themeBtn.textContent = Controller.getThemeIcon();
+        } 
     },
 
     loadTheme: () => {
@@ -38,7 +42,7 @@ const Controller = {
         const themeLink = document.getElementById('theme-style');
         
         if (savedTheme === 'dark') {
-            themeLink.setAttribute('href', 'css/style-dark.css');
+            themeLink.setAttribute('href', 'css/style_dark.css');
         } else {
             themeLink.setAttribute('href', 'css/style.css');
         }
@@ -71,7 +75,10 @@ const Controller = {
 
     openCreator: () => {
         draftSubject = { name: "", questions: [] };
-        appContainer.innerHTML = View.creator();
+        appContainer.innerHTML = `
+        <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
+            ${Controller.getThemeIcon()}
+        </button>` + View.creator();
         Controller.initCreator();
     },
 
@@ -263,7 +270,10 @@ const Controller = {
     openSubject: (id) => {
         const db = getDatabase();
         const subject = db.find(s => s.id === id);
-        if(subject) appContainer.innerHTML = View.subjectDetails(subject);
+        if(subject) appContainer.innerHTML = `
+        <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
+            ${Controller.getThemeIcon()}
+        </button>` + View.subjectDetails(subject);
     },
 
     startQuiz: (subjectId, mode) => {
@@ -274,7 +284,10 @@ const Controller = {
     },
 
     renderCurrentQuestion: () => {
-        appContainer.innerHTML = View.question(currentSession);
+        appContainer.innerHTML = `
+        <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
+            ${Controller.getThemeIcon()}
+        </button>` + View.question(currentSession);
     },
 
     handleAnswer: (index) => {
@@ -295,7 +308,10 @@ const Controller = {
             if (currentSession.next()) {
                 Controller.renderCurrentQuestion();
             } else {
-                appContainer.innerHTML = View.results(currentSession);
+                appContainer.innerHTML = `
+                <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
+                    ${Controller.getThemeIcon()}
+                </button>` + View.results(currentSession);
             }
         }, 1500);
     }

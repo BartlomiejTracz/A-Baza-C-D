@@ -117,7 +117,7 @@ div[style*="display:flex"] {
     font-size: 14px;
 }
 .card-home { position: relative; }
-.btn-delete {
+.btn-home-delete {
     background: #c0392b;
     color: white;
     border: none;
@@ -127,6 +127,29 @@ div[style*="display:flex"] {
     font-weight: bold;
     cursor: pointer;
     margin-left: 10px;
+}
+
+.btn-edit {
+    background: #f39c12;
+    color: #333;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.btn-delete {
+    background: #c0392b;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.correct-answer {
+    color: #00b894;
+    font-weight: bold;
 }
 
 /* Przycisk motywu (dodamy go w CSS, żeby wyglądał dobrze) */
