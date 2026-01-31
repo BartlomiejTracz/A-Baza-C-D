@@ -32,6 +32,10 @@ h3 { font-size: 18px; margin-top: 0; color: #b0b3b8; }
     border: 1px solid #333;    /* Delikatna ramka dla odcięcia */
 }
 
+.card p strong {
+    color: #ffffff;
+}
+
 .card:active { transform: scale(0.98); }
 
 /* 3. PRZYCISKI */
@@ -191,4 +195,50 @@ div[style*="display:flex"] {
 
 .btn-delete-home {
     background-color: #e74c3c; /* Czerwony dla kosza */
+}
+
+.answer-option {
+    background-color: #2d2d2d; /* Ciemne tło */
+    color: #e0e0e0;
+    border: 1px solid #444;
+    padding: 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.answer-option:hover {
+    background-color: #3d3d3d;
+}
+
+.answer-option.selected {
+    background-color: #1a3a5a; /* Ciemny niebieski */
+    border-color: #3d8cd6;
+}
+
+.answer-row {
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quiz-check {
+    width: 20px;
+    height: 20px;
+    accent-color: #3d8cd6; /* Kolor zaznaczenia w ciemnym trybie */
+    pointer-events: none; /* Kliknięcie przechodzi do rodzica .answer-option */
+}
+
+/* W trybie ciemnym */
+body.dark-mode .answer-option {
+    background-color: #2d2d2d;
+    border-color: #444;
+}
+body.dark-mode .answer-option.selected {
+    background-color: #1a3a5a;
+    border-color: #3d8cd6;
 }

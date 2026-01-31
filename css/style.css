@@ -204,3 +204,26 @@ input[type="radio"] {
 .btn-delete-home {
     background-color: #e74c3c; /* Czerwony dla kosza */
 }
+
+.answer-option {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.answer-option.selected {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.quiz-check {
+    transform: scale(1.5);
+    margin-right: 15px;
+    pointer-events: none; /* Klikamy w cały wiersz */
+}

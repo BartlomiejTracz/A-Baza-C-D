@@ -26,19 +26,25 @@ export class QuizSession {
     }
 
     _scrambleAnswers(originalQuestion) {
+        // Obsługa formatu tablicowego (nowy) i liczbowego (stary import)
+        const correctIndices = Array.isArray(originalQuestion.correct) 
+            ? originalQuestion.correct 
+            : [originalQuestion.correct];
+
         const answersWithMeta = originalQuestion.answers.map((ans, index) => ({
             text: ans,
-            isCorrect: index === originalQuestion.correct
+            isCorrect: correctIndices.includes(index)
         }));
 
         const shuffledAnswers = shuffleArray(answersWithMeta);
-
-        const newCorrectIndex = shuffledAnswers.findIndex(item => item.isCorrect);
+        const newCorrectIndices = shuffledAnswers
+            .map((item, idx) => item.isCorrect ? idx : null)
+            .filter(idx => idx !== null);
 
         return {
             ...originalQuestion,
             answers: shuffledAnswers.map(item => item.text),
-            correct: newCorrectIndex
+            correct: newCorrectIndices
         };
     }
 
@@ -46,15 +52,18 @@ export class QuizSession {
         return this.questions[this.currentIndex];
     }
 
-    submitAnswer(answerIndex) {
+    submitAnswer(selectedIndices) {
         const q = this.getCurrentQuestion();
-        const isCorrect = answerIndex === q.correct;
+        
+        // Sprawdzenie czy wybrane indeksy zgadzają się z poprawnymi
+        const isCorrect = selectedIndices.length === q.correct.length && 
+                          selectedIndices.every(idx => q.correct.includes(idx));
 
         if (isCorrect) this.score++;
 
         this.history.push({
             question: q,
-            userSelected: answerIndex,
+            userSelected: selectedIndices, // Teraz tablica
             isCorrect: isCorrect
         });
 
@@ -64,9 +73,5 @@ export class QuizSession {
     next() {
         this.currentIndex++;
         return this.currentIndex < this.questions.length;
-    }
-
-    isFinished() {
-        return this.currentIndex >= this.questions.length;
     }
 }

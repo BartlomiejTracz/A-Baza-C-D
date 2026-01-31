@@ -8,7 +8,7 @@ let currentSession = null;
 let draftSubject = {
     name: "",
     questions: [],
-    id: null // Dodajemy pole ID do stanu edytora
+    id: null
 };
 
 const Controller = {
@@ -17,19 +17,14 @@ const Controller = {
         Controller.goHome();
     },
 
-    // --- MOTYWY (Bez zmian) ---
+    // --- MOTYWY ---
     toggleTheme: () => {
         const themeLink = document.getElementById('theme-style');
         const currentTheme = themeLink.getAttribute('href');
-        let newTheme = '';
-
-        if (currentTheme.includes('style.css') && !currentTheme.includes('dark')) {
-            newTheme = 'css/style_dark.css';
-            localStorage.setItem('app_theme', 'dark');
-        } else {
-            newTheme = 'css/style.css';
-            localStorage.setItem('app_theme', 'light');
-        }
+        let newTheme = currentTheme.includes('style.css') && !currentTheme.includes('dark') 
+            ? 'css/style_dark.css' : 'css/style.css';
+        
+        localStorage.setItem('app_theme', newTheme.includes('dark') ? 'dark' : 'light');
         themeLink.setAttribute('href', newTheme);
         const themeBtn = document.querySelector('.theme-toggle-btn');
         if (themeBtn) themeBtn.textContent = Controller.getThemeIcon();
@@ -41,22 +36,11 @@ const Controller = {
         themeLink.setAttribute('href', savedTheme === 'dark' ? 'css/style_dark.css' : 'css/style.css');
     },
 
-    getThemeIcon: () => {
-        const savedTheme = localStorage.getItem('app_theme');
-        return savedTheme === 'dark' ? '☀️' : '🌙';
-    },
-
-    // --- NAWIGACJA I EKRAN GŁÓWNY ---
+    getThemeIcon: () => localStorage.getItem('app_theme') === 'dark' ? '☀️' : '🌙',
 
     goHome: () => {
         const db = getDatabase();
-        let html = `
-        <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
-            ${Controller.getThemeIcon()}
-        </button>
-
-        <h1>Moje Quizy</h1>`;
-        
+        let html = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button><h1>Moje Quizy</h1>`;
         html += `<button class="btn" style="background:#6f42c1; margin-bottom:20px" onclick="window.app.openCreator()">+ DODAJ WŁASNĄ BAZĘ</button>`;
         html += `<div style="display:flex; gap:10px; margin-bottom:20px">
              <input type="file" id="import-file" accept=".json" style="display:none" onchange="window.app.handleFileImport(this)">
@@ -66,142 +50,78 @@ const Controller = {
         appContainer.innerHTML = html;
     },
 
-    // --- KREATOR I EDYCJA ---
-
+    // --- KREATOR ---
     openCreator: () => {
-        // Resetujemy draft (nowa baza)
         draftSubject = { name: "", questions: [], id: null };
-        appContainer.innerHTML = `
-        <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
-            ${Controller.getThemeIcon()}
-        </button>` + View.creator();
+        appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.creator();
         Controller.initCreator();
     },
 
-    // NOWE: Funkcja otwierająca kreator z danymi istniejącej bazy
     editSubject: (id) => {
         const db = getDatabase();
         const subject = db.find(s => s.id === id);
         if (!subject) return;
-
-        // Kopiujemy dane do draftu (głęboka kopia dla bezpieczeństwa)
         draftSubject = JSON.parse(JSON.stringify(subject));
-
-        // Ładujemy widok kreatora
-        appContainer.innerHTML = `
-        <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
-            ${Controller.getThemeIcon()}
-        </button>` + View.creator();
-
-        // Ustawiamy nazwę w formularzu
+        appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.creator();
         document.getElementById('new-subject-name').value = draftSubject.name;
-        
-        // Inicjalizujemy puste pola edytora pytania
-        Controller.initCreator();
-        
-        // Wyświetlamy listę pytań z załadowanej bazy
         Controller.updateDraftList();
+        Controller.initCreator();
     },
 
     initCreator: () => {
         const answersWrap = document.getElementById('answers-wrap');
         answersWrap.innerHTML = ''; 
-        for(let i = 0; i < 4; i++){
-            answersWrap.innerHTML += View.answerInput(i);
-        }
+        for(let i = 0; i < 4; i++) answersWrap.innerHTML += View.answerInput(i);
     },
 
-    clearQuestionForm: () => {
-        document.getElementById('q-text').value = '';
-        const answersWrap = document.getElementById('answers-wrap');
-        answersWrap.innerHTML = '';
-        for(let i = 0; i < 4; i++){
-            answersWrap.innerHTML += View.answerInput(i);
-        }
-    },
-
-    addAnswerField: (value = "") => {
+    addAnswerField: (value = "", isChecked = false) => {
         const answersWrap = document.getElementById('answers-wrap');
         const count = answersWrap.children.length;
-        answersWrap.innerHTML += View.answerInput(count, value);
+        answersWrap.innerHTML += View.answerInput(count, value, isChecked);
     },
 
     removeAnswerField: (index) => {
+        const rows = Array.from(document.querySelectorAll('.answer-row'));
+        const newData = rows.map(row => ({
+            text: row.querySelector('.answer-text').value,
+            checked: row.querySelector('input[type="checkbox"]').checked
+        }));
+        newData.splice(index, 1);
         const answersWrap = document.getElementById('answers-wrap');
-        const answerTexts = Array.from(document.querySelectorAll('.answer-text')).map(inp => inp.value);
-        const checkedRadio = document.querySelector('input[name="correct-ans"]:checked');
-        let correctIndex = checkedRadio ? parseInt(checkedRadio.value) : -1;
-
-        answerTexts.splice(index, 1);
-        if(correctIndex > index) correctIndex--;
-        else if(correctIndex === index) correctIndex = -1; 
-
         answersWrap.innerHTML = '';
-        answerTexts.forEach((val, i) => {
-            answersWrap.innerHTML += View.answerInput(i, val);
-        });
-
-        if(correctIndex >= 0 && correctIndex < answerTexts.length){
-            document.querySelector(`input[name="correct-ans"][value="${correctIndex}"]`).checked = true;
-        }
+        newData.forEach((data, i) => Controller.addAnswerField(data.text, data.checked));
     },
 
     saveQuestionToDraft: () => {
         const qText = document.getElementById('q-text').value.trim();
-        const answerTexts = Array.from(document.querySelectorAll('.answer-text')).map(inp => inp.value.trim()).filter(v => v !== '');
-        const correctRadio = document.querySelector('input[name="correct-ans"]:checked');
+        const rows = Array.from(document.querySelectorAll('.answer-row'));
+        const answers = rows.map(r => r.querySelector('.answer-text').value.trim()).filter(v => v !== '');
+        const correct = rows.map((r, i) => r.querySelector('input[type="checkbox"]').checked ? i : null).filter(v => v !== null);
 
-        if(!qText || answerTexts.length < 2){
-            alert("Wpisz pytanie i przynajmniej dwie odpowiedzi!");
-            return;
-        }
-        if(!correctRadio){
-            alert("Zaznacz poprawną odpowiedź!");
+        if(!qText || answers.length < 2 || correct.length === 0){
+            alert("Wpisz pytanie, min. 2 odpowiedzi i zaznacz przynajmniej jedną poprawną!");
             return;
         }
 
-        const correct = parseInt(correctRadio.value);
-        const newQ = {
-            id: Date.now(),
-            text: qText,
-            answers: answerTexts,
-            correct: correct
-        };
-
-        draftSubject.questions.push(newQ);
-        Controller.clearQuestionForm(); 
+        draftSubject.questions.push({ id: Date.now(), text: qText, answers, correct });
+        document.getElementById('q-text').value = '';
+        Controller.initCreator();
         Controller.updateDraftList();
     },
 
     updateDraftList: () => {
-        const list = document.getElementById('draft-list');
-        const count = document.getElementById('q-count');
-        
-        if(draftSubject.questions.length === 0) {
-            list.innerHTML = '<p style="padding:10px; opacity:0.7">Brak dodanych pytań.</p>';
-            count.textContent = '0';
-            return;
-        }
-
-        count.textContent = draftSubject.questions.length;
-        list.innerHTML = draftSubject.questions.map((q, idx) => View.draftItem(q, idx)).join('');
+        document.getElementById('q-count').textContent = draftSubject.questions.length;
+        document.getElementById('draft-list').innerHTML = draftSubject.questions.length ? 
+            draftSubject.questions.map((q, idx) => View.draftItem(q, idx)).join('') : 
+            '<p style="padding:10px; opacity:0.7">Brak pytań.</p>';
     },
 
     editDraftQuestion: (index) => {
         const q = draftSubject.questions[index];
         document.getElementById('q-text').value = q.text;
-
         const answersWrap = document.getElementById('answers-wrap');
         answersWrap.innerHTML = '';
-        q.answers.forEach((ans, i) => {
-            Controller.addAnswerField(ans);
-        });
-
-        setTimeout(() => {
-             const radio = document.querySelector(`input[name="correct-ans"][value="${q.correct}"]`);
-             if(radio) radio.checked = true;
-        }, 0);
-
+        q.answers.forEach((ans, i) => Controller.addAnswerField(ans, q.correct.includes(i)));
         draftSubject.questions.splice(index, 1);
         Controller.updateDraftList();
     },
@@ -211,76 +131,41 @@ const Controller = {
         Controller.updateDraftList();
     },
 
-    deleteSubject: (id) => {
-        if(confirm("Czy na pewno usunąć?")) {
-            deleteSubjectData(id);
-            Controller.goHome();
-        }
-    },
-
     saveDatabase: () => {
-        const nameInput = document.getElementById('new-subject-name').value;
-        if(!nameInput) { alert("Podaj nazwę przedmiotu!"); return; }
-        if(draftSubject.questions.length === 0) { alert("Dodaj chociaż jedno pytanie!"); return; }
-
-        draftSubject.name = nameInput;
-        
-        // ZMIANA: Jeśli draft nie ma ID (to nowa baza), generujemy nowe.
-        // Jeśli ma ID (to edycja), zostawiamy stare.
-        if (!draftSubject.id) {
-            draftSubject.id = "custom_" + Date.now(); 
-        }
-
-        saveNewSubject(draftSubject); // Funkcja w data.js teraz obsługuje aktualizację
-        alert("Zapisano zmiany!");
+        const name = document.getElementById('new-subject-name').value;
+        if(!name || draftSubject.questions.length === 0) return alert("Podaj nazwę i dodaj pytania!");
+        draftSubject.name = name;
+        if (!draftSubject.id) draftSubject.id = "custom_" + Date.now();
+        saveNewSubject(draftSubject);
+        alert("Zapisano!");
         Controller.goHome();
     },
 
     downloadJSON: () => {
-        const nameInput = document.getElementById('new-subject-name').value;
-        if(draftSubject.questions.length === 0) { alert("Najpierw dodaj pytania!"); return; }
-        
-        draftSubject.name = nameInput || "BezNazwy";
-        // Przy eksporcie generujemy ID exportowe, chyba że chcemy zachować ID
-        if (!draftSubject.id) draftSubject.id = "export_" + Date.now();
-
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(draftSubject));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", draftSubject.name + ".json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
+        const name = document.getElementById('new-subject-name').value || "BezNazwy";
+        if(draftSubject.questions.length === 0) return alert("Brak pytań!");
+        draftSubject.name = name;
+        const blob = new Blob([JSON.stringify(draftSubject)], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${name}.json`; a.click();
     },
 
     loadDraftFromFile: (input) => {
         const file = input.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const json = JSON.parse(e.target.result);
-                if (!json.name || !Array.isArray(json.questions)) throw new Error("Zły plik");
-
-                draftSubject.name = json.name;
-                draftSubject.questions = json.questions;
-                // Jeśli wczytujemy plik do edycji, to traktujemy go jako nową bazę lub aktualizację
-                // Możemy przepisać ID z pliku jeśli chcemy nadpisać, lub wyczyścić ID żeby stworzyć kopię
-                // Tutaj przyjmujemy strategię: Edycja z pliku = potencjalnie nowa baza, chyba że user ją nadpisze
-                // Bezpieczniej jest wyczyścić ID, aby nie nadpisać przypadkiem innej bazy o tym samym ID (jeśli plik pochodzi od kogoś innego)
-                draftSubject.id = null; 
-
+                draftSubject = { name: json.name, questions: json.questions, id: null };
                 document.getElementById('new-subject-name').value = json.name;
                 Controller.updateDraftList();
-                Controller.clearQuestionForm();
-                alert(`Wczytano: ${json.name}`);
-            } catch (err) { alert("Błąd: " + err.message); }
+            } catch (err) { alert("Błąd pliku!"); }
         };
         reader.readAsText(file);
-        input.value = '';
     },
-    
+
     handleFileImport: (input) => {
         const file = input.files[0];
         if (!file) return;
@@ -288,64 +173,66 @@ const Controller = {
         reader.onload = (e) => {
             try {
                 const json = JSON.parse(e.target.result);
-                if (!json.name || !Array.isArray(json.questions)) throw new Error("Zły format");
                 json.id = "import_" + Date.now();
                 saveNewSubject(json);
-                alert("Zaimportowano!");
                 Controller.goHome();
-            } catch (err) { alert("Błąd: " + err.message); }
+            } catch (err) { alert("Błąd formatu!"); }
         };
         reader.readAsText(file);
-        input.value = '';
     },
 
     openSubject: (id) => {
-        const db = getDatabase();
-        const subject = db.find(s => s.id === id);
-        if(subject) appContainer.innerHTML = `
-        <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
-            ${Controller.getThemeIcon()}
-        </button>` + View.subjectDetails(subject);
+        const subject = getDatabase().find(s => s.id === id);
+        if(subject) appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.subjectDetails(subject);
     },
 
+    // --- QUIZ ---
     startQuiz: (subjectId, mode) => {
-        const db = getDatabase();
-        const subject = db.find(s => s.id === subjectId);
+        const subject = getDatabase().find(s => s.id === subjectId);
         currentSession = new QuizSession(subjectId, subject.questions, mode);
         Controller.renderCurrentQuestion();
     },
 
     renderCurrentQuestion: () => {
-        appContainer.innerHTML = `
-        <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
-            ${Controller.getThemeIcon()}
-        </button>` + View.question(currentSession);
+        appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.question(currentSession);
     },
 
-    handleAnswer: (index) => {
-        const btns = document.querySelectorAll('.btn-answer');
-        btns.forEach(b => b.disabled = true);
-        const isCorrect = currentSession.submitAnswer(index);
-        const q = currentSession.getCurrentQuestion();
+    toggleSelection: (index) => {
+        const checkbox = document.getElementById(`ans-${index}`);
+        checkbox.checked = !checkbox.checked;
+        checkbox.parentElement.classList.toggle('selected', checkbox.checked);
+    },
 
-        if (isCorrect) {
-            btns[index].classList.add('btn-correct');
-            markAsMastered(currentSession.subjectId, q.id);
-        } else {
-            btns[index].classList.add('btn-wrong');
-            if(btns[q.correct]) btns[q.correct].classList.add('btn-correct');
-        }
+    handleAnswer: () => {
+        const selected = Array.from(document.querySelectorAll('.quiz-check'))
+            .map((ch, i) => ch.checked ? i : null)
+            .filter(v => v !== null);
+
+        const isCorrect = currentSession.submitAnswer(selected);
+        const q = currentSession.getCurrentQuestion();
+        const checks = document.querySelectorAll('.quiz-check');
+        const rows = document.querySelectorAll('.answer-option');
+
+        rows.forEach((row, i) => {
+            const isRowCorrect = q.correct.includes(i);
+            const isRowSelected = selected.includes(i);
+            
+            if (isRowCorrect) row.classList.add('btn-correct');
+            else if (isRowSelected) row.classList.add('btn-wrong');
+            
+            row.style.pointerEvents = 'none';
+        });
+
+        if (isCorrect) markAsMastered(currentSession.subjectId, q.id);
 
         setTimeout(() => {
-            if (currentSession.next()) {
-                Controller.renderCurrentQuestion();
-            } else {
-                appContainer.innerHTML = `
-                <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
-                    ${Controller.getThemeIcon()}
-                </button>` + View.results(currentSession);
-            }
-        }, 1500);
+            if (currentSession.next()) Controller.renderCurrentQuestion();
+            else appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.results(currentSession);
+        }, 2000);
+    },
+
+    deleteSubject: (id) => {
+        if(confirm("Usunąć bazę?")) { deleteSubjectData(id); Controller.goHome(); }
     }
 };
 
