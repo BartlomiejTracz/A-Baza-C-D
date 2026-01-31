@@ -1,5 +1,17 @@
 import { getMasteredIds } from './data.js';
 
+// --- FUNKCJA ZABEZPIECZAJĄCA ---
+// Zamienia znaki specjalne na tekst, żeby przeglądarka nie traktowała ich jak kodu
+function escapeHTML(str) {
+    if (!str) return "";
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 export const View = {
     homeCard(subject) {
         const totalQ = subject.questions.length;
@@ -7,7 +19,8 @@ export const View = {
         const percent = totalQ > 0 ? Math.floor((masteredCount / totalQ) * 100) : 0;
         
         const isCustom = subject.id.toString().startsWith('custom_') || subject.id.toString().startsWith('import_');
-        
+        // Zabezpieczamy nazwę przedmiotu
+        const safeName = escapeHTML(subject.name);
         
         let buttonsHtml = '';
         if (isCustom) {
@@ -21,7 +34,7 @@ export const View = {
         return `
         <div class="card card-home" onclick="window.app.openSubject('${subject.id}')">
             <div style="display:flex; justify-content:space-between; align-items:flex-start">
-                <h3 style="flex:1">${subject.name}</h3>
+                <h3 style="flex:1">${safeName}</h3>
                 ${buttonsHtml}
             </div>
             <p>Baza: ${totalQ} pytań | Opanowano: ${percent}%</p>
@@ -31,12 +44,12 @@ export const View = {
 
    subjectDetails(subject) {
         const total = subject.questions.length;
-        // Domyślnie proponujemy 40, chyba że pytań jest mniej - wtedy max dostępnych
         const defaultCount = Math.min(40, total);
+        const safeName = escapeHTML(subject.name);
 
         return `
         <button class="btn" style="background:#6c757d" onclick="window.app.goHome()">← Wróć</button>
-        <h1>${subject.name}</h1>
+        <h1>${safeName}</h1>
         
         <div class="card" style="border: 2px solid #3498db">
             <h3>Tryb Egzaminu</h3>
@@ -64,13 +77,13 @@ export const View = {
         const current = quizSession.currentIndex + 1;
         const total = quizSession.questions.length;
 
-        // Jeśli więcej niż jedna poprawna odpowiedź, dodajemy info
         const isMulti = q.correct.length > 1;
 
+        // Zabezpieczamy treść odpowiedzi i treść pytania
         let answersHtml = q.answers.map((ans, idx) => `
             <div class="answer-option" onclick="window.app.toggleSelection(${idx})">
                 <input type="checkbox" id="ans-${idx}" class="quiz-check">
-                <label style="cursor:pointer; flex:1; margin-left:10px">${ans}</label>
+                <label style="cursor:pointer; flex:1; margin-left:10px">${escapeHTML(ans)}</label>
             </div>
         `).join('');
 
@@ -79,7 +92,7 @@ export const View = {
             <span>Pytanie ${current}/${total} ${isMulti ? '(Wielokrotny wybór)' : ''}</span>
             <span>Punkty: ${quizSession.score}</span>
         </div>
-        <div class="card"><h3>${q.text}</h3></div>
+        <div class="card"><h3>${escapeHTML(q.text)}</h3></div>
         <div id="answers-container">${answersHtml}</div>
         <button class="btn" style="background:#2ecc71; margin-top:20px" onclick="window.app.handleAnswer()">Zatwierdź odpowiedź</button>
         `;
@@ -92,11 +105,13 @@ export const View = {
         let errorsHtml = errors.length > 0 ? '<h3>Błędy:</h3>' : '<h3 style="color:green">Brak błędów!</h3>';
 
         errors.forEach(item => {
-            const userAns = item.userSelected.map(i => item.question.answers[i]).join(', ') || "Brak";
-            const correctAns = item.question.correct.map(i => item.question.answers[i]).join(', ');
+            // Tutaj też escapeHTML, bo podsumowanie też może się rozsypać
+            const userAns = item.userSelected.map(i => escapeHTML(item.question.answers[i])).join(', ') || "Brak";
+            const correctAns = item.question.correct.map(i => escapeHTML(item.question.answers[i])).join(', ');
+            
             errorsHtml += `
             <div class="card" style="border-left: 5px solid #dc3545">
-                <p><strong>${item.question.text}</strong></p>
+                <p><strong>${escapeHTML(item.question.text)}</strong></p>
                 <p style="color:red">Twoje: ${userAns}</p>
                 <p style="color:green">Poprawne: ${correctAns}</p>
             </div>`;
@@ -141,19 +156,23 @@ export const View = {
     },
 
     answerInput(index, value = "", isChecked = false) {
+        // Tu jest WAŻNE: value="..." musi mieć escape, bo inaczej cudzysłów w tekście zepsuje HTML inputa
         return `
         <div class="answer-row" id="ans-row-${index}" style="display:flex; align-items:center; margin-bottom:5px">
             <input type="checkbox" name="correct-ans" value="${index}" ${isChecked ? 'checked' : ''}>
-            <input type="text" class="input-field answer-text" data-idx="${index}" value="${value}" placeholder="Odp ${index + 1}" style="margin:0">
+            <input type="text" class="input-field answer-text" data-idx="${index}" value="${escapeHTML(value)}" placeholder="Odp ${index + 1}" style="margin:0">
             <button onclick="window.app.removeAnswerField(${index})" style="background:none; border:none; color:red; font-size:20px; margin-left:5px">×</button>
         </div>`;
     },
 
     draftItem(question, index) {
-        const correctAnswers = question.correct.map(i => question.answers[i]).join(', ');
+        // Zabezpieczamy listę w kreatorze - to tu psuły się kolejne pytania
+        const safeText = escapeHTML(question.text);
+        const correctAnswers = question.correct.map(i => escapeHTML(question.answers[i])).join(', ');
+        
         return `
         <div class="card draft-item" style="padding:10px;">
-            <div style="font-weight:bold; margin-bottom:5px">${index + 1}. ${question.text}</div>
+            <div style="font-weight:bold; margin-bottom:5px">${index + 1}. ${safeText}</div>
             <div style="font-size:0.9em;">
                 Poprawne: <strong class="correct-answer">${correctAnswers}</strong>
             </div>
