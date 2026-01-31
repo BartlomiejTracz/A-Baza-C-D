@@ -109,15 +109,33 @@ export const View = {
         let errorsHtml = errors.length > 0 ? '<h3>Błędy:</h3>' : '<h3 style="color:green">Brak błędów!</h3>';
 
         errors.forEach(item => {
-            // Tutaj też escapeHTML, bo podsumowanie też może się rozsypać
-            const userAns = item.userSelected.map(i => escapeHTML(item.question.answers[i])).join(', ') || "Brak";
-            const correctAns = item.question.correct.map(i => escapeHTML(item.question.answers[i])).join(', ');
+            // Tworzymy listy punktowe dla odpowiedzi użytkownika i poprawnych odpowiedzi
+            const userAnsList = item.userSelected
+                .map(i => `<li style="margin-left: 15px;">• ${escapeHTML(item.question.answers[i])}</li>`)
+                .join('');
+                
+            const correctAnsList = item.question.correct
+                .map(i => `<li style="margin-left: 15px;">• ${escapeHTML(item.question.answers[i])}</li>`)
+                .join('');
+
+            // Formatuje wyświetlanie: jeśli brak odpowiedzi użytkownika, wyświetla "Brak"
+            const userAnsDisplay = item.userSelected.length > 0 
+                ? `<ul style="list-style: none; padding: 0; margin: 5px 0; color: #e74c3c;">${userAnsList}</ul>` 
+                : '<span style="color:red">Brak</span>';
+
+            const correctAnsDisplay = `<ul style="list-style: none; padding: 0; margin: 5px 0; color: #2ecc71;">${correctAnsList}</ul>`;
             
             errorsHtml += `
             <div class="card" style="border-left: 5px solid #dc3545">
                 <p><strong>${escapeHTML(item.question.text)}</strong></p>
-                <p style="color:red">Twoje: ${userAns}</p>
-                <p style="color:green">Poprawne: ${correctAns}</p>
+                <div style="margin-bottom: 10px;">
+                    <p style="color:red; font-weight: bold; margin-bottom: 2px;">Twoje odpowiedzi:</p>
+                    ${userAnsDisplay}
+                </div>
+                <div>
+                    <p style="color:green; font-weight: bold; margin-bottom: 2px;">Poprawne odpowiedzi:</p>
+                    ${correctAnsDisplay}
+                </div>
             </div>`;
         });
 
