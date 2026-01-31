@@ -29,17 +29,33 @@ export const View = {
         </div>`;
     },
 
-    subjectDetails(subject) {
+   subjectDetails(subject) {
+        const total = subject.questions.length;
+        // Domyślnie proponujemy 40, chyba że pytań jest mniej - wtedy max dostępnych
+        const defaultCount = Math.min(40, total);
+
         return `
         <button class="btn" style="background:#6c757d" onclick="window.app.goHome()">← Wróć</button>
         <h1>${subject.name}</h1>
-        <div class="card">
+        
+        <div class="card" style="border: 2px solid #3498db">
             <h3>Tryb Egzaminu</h3>
-            <button class="btn" onclick="window.app.startQuiz('${subject.id}', 3)">Start (Losowe 3)</button> 
+            <p>Losowe pytania z puli (Dostępnych: ${total})</p>
+            
+            <label style="display:block; margin-bottom:5px; font-weight:bold; color:#555">Ile pytań wylosować?</label>
+            <div style="display:flex; gap:10px; margin-bottom:15px">
+                <input type="number" id="exam-count-input" class="input-field" 
+                       value="${defaultCount}" min="1" max="${total}" 
+                       style="margin:0; text-align:center; font-weight:bold; font-size:18px">
+            </div>
+
+            <button class="btn" onclick="window.app.startCustomExam('${subject.id}')">Start Egzaminu</button> 
         </div>
+
         <div class="card">
             <h3>Tryb Nauki</h3>
-            <button class="btn" onclick="window.app.startQuiz('${subject.id}', 'all')">Ucz się wszystkiego</button>
+            <p>Przejdź przez całą bazę (${total} pytań) bez losowania.</p>
+            <button class="btn" style="background:#17a2b8" onclick="window.app.startQuiz('${subject.id}', 'all')">Ucz się wszystkiego</button>
         </div>`;
     },
 

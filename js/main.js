@@ -158,14 +158,43 @@ const Controller = {
         reader.onload = (e) => {
             try {
                 const json = JSON.parse(e.target.result);
+
+                // --- POPRAWKA: Normalizacja starych baz (number -> array) ---
+                if (json.questions) {
+                    json.questions.forEach(q => {
+                        // Jeśli correct jest liczbą (stary format), zamień na tablicę
+                        if (typeof q.correct === 'number') {
+                            q.correct = [q.correct];
+                        }
+                        // Zabezpieczenie na wypadek braku pola
+                        if (!q.correct) {
+                            q.correct = [];
+                        }
+                    });
+                }
+                // -------------------------------------------------------------
+
                 draftSubject = { name: json.name, questions: json.questions, id: null };
+                
+                // Jeśli wczytujemy plik, warto też pobrać ID jeśli chcemy nadpisać, 
+                // ale tutaj czyścimy ID (id: null), żeby stworzyć kopię/nową wersję.
+                // Jeśli chcesz zachować ID z pliku, użyj: json.id || null
+
                 document.getElementById('new-subject-name').value = json.name;
                 Controller.updateDraftList();
-            } catch (err) { alert("Błąd pliku!"); }
+                
+                // Czyścimy input pliku, żeby dało się wybrać ten sam plik ponownie
+                input.value = ''; 
+                alert(`Wczytano bazę: ${json.name}`);
+
+            } catch (err) { 
+                console.error(err); // Wyświetl prawdziwy błąd w konsoli (F12)
+                alert("Błąd pliku! (Sprawdź konsolę F12 po szczegóły)"); 
+            }
         };
         reader.readAsText(file);
     },
-
+    
     handleFileImport: (input) => {
         const file = input.files[0];
         if (!file) return;
@@ -233,7 +262,40 @@ const Controller = {
 
     deleteSubject: (id) => {
         if(confirm("Usunąć bazę?")) { deleteSubjectData(id); Controller.goHome(); }
-    }
+    },
+    startCustomExam: (subjectId) => {
+        const input = document.getElementById('exam-count-input');
+        const count = parseInt(input.value);
+        
+        // Pobieramy przedmiot, żeby sprawdzić ile ma łącznie pytań
+        const subject = getDatabase().find(s => s.id === subjectId);
+        if (!subject) return;
+
+        const maxQuestions = subject.questions.length;
+
+        // Walidacja
+        if (isNaN(count) || count < 1) {
+            alert("Podaj poprawną liczbę pytań (minimum 1).");
+            return;
+        }
+
+        if (count > maxQuestions) {
+            alert(`W bazie jest tylko ${maxQuestions} pytań! Zmniejsz liczbę.`);
+            // Automatycznie poprawiamy wpisaną wartość na max
+            input.value = maxQuestions;
+            return;
+        }
+
+        // Jeśli wszystko ok, odpalamy quiz z podaną liczbą
+        Controller.startQuiz(subjectId, count);
+    },
+
+    // ... funkcja startQuiz pozostaje bez zmian ...
+    startQuiz: (subjectId, mode) => {
+        const subject = getDatabase().find(s => s.id === subjectId);
+        currentSession = new QuizSession(subjectId, subject.questions, mode);
+        Controller.renderCurrentQuestion();
+    },
 };
 
 window.app = Controller;
