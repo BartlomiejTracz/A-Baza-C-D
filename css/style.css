@@ -181,3 +181,26 @@ input[type="radio"] {
     justify-content: center;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
+
+/* Ikony edycji i usuwania */
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.btn-edit-home {
+    background-color: #f1c40f; /* Żółty dla edycji */
+    margin-right: 5px;
+}
+
+.btn-delete-home {
+    background-color: #e74c3c; /* Czerwony dla kosza */
+}

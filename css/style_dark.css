@@ -169,3 +169,26 @@ div[style*="display:flex"] {
     align-items: center;
     justify-content: center;
 }
+
+/* Ikony edycji i usuwania */
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.btn-edit-home {
+    background-color: #f1c40f; /* Żółty dla edycji */
+    margin-right: 5px;
+}
+
+.btn-delete-home {
+    background-color: #e74c3c; /* Czerwony dla kosza */
+}

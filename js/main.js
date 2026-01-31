@@ -7,7 +7,8 @@ let currentSession = null;
 
 let draftSubject = {
     name: "",
-    questions: []
+    questions: [],
+    id: null // Dodajemy pole ID do stanu edytora
 };
 
 const Controller = {
@@ -16,6 +17,7 @@ const Controller = {
         Controller.goHome();
     },
 
+    // --- MOTYWY (Bez zmian) ---
     toggleTheme: () => {
         const themeLink = document.getElementById('theme-style');
         const currentTheme = themeLink.getAttribute('href');
@@ -28,24 +30,15 @@ const Controller = {
             newTheme = 'css/style.css';
             localStorage.setItem('app_theme', 'light');
         }
-
         themeLink.setAttribute('href', newTheme);
-        
         const themeBtn = document.querySelector('.theme-toggle-btn');
-        if (themeBtn) {
-            themeBtn.textContent = Controller.getThemeIcon();
-        } 
+        if (themeBtn) themeBtn.textContent = Controller.getThemeIcon();
     },
 
     loadTheme: () => {
         const savedTheme = localStorage.getItem('app_theme');
         const themeLink = document.getElementById('theme-style');
-        
-        if (savedTheme === 'dark') {
-            themeLink.setAttribute('href', 'css/style_dark.css');
-        } else {
-            themeLink.setAttribute('href', 'css/style.css');
-        }
+        themeLink.setAttribute('href', savedTheme === 'dark' ? 'css/style_dark.css' : 'css/style.css');
     },
 
     getThemeIcon: () => {
@@ -53,7 +46,7 @@ const Controller = {
         return savedTheme === 'dark' ? '☀️' : '🌙';
     },
 
-
+    // --- NAWIGACJA I EKRAN GŁÓWNY ---
 
     goHome: () => {
         const db = getDatabase();
@@ -67,19 +60,47 @@ const Controller = {
         html += `<button class="btn" style="background:#6f42c1; margin-bottom:20px" onclick="window.app.openCreator()">+ DODAJ WŁASNĄ BAZĘ</button>`;
         html += `<div style="display:flex; gap:10px; margin-bottom:20px">
              <input type="file" id="import-file" accept=".json" style="display:none" onchange="window.app.handleFileImport(this)">
-             <button class="btn" style="background:#20c997; flex:1" onclick="document.getElementById('import-file').click()">SZYBKI IMPORT </button>
+             <button class="btn" style="background:#20c997; flex:1" onclick="document.getElementById('import-file').click()">SZYBKI IMPORT</button>
         </div>`;
         html += db.map(s => View.homeCard(s)).join('');
         appContainer.innerHTML = html;
     },
 
+    // --- KREATOR I EDYCJA ---
+
     openCreator: () => {
-        draftSubject = { name: "", questions: [] };
+        // Resetujemy draft (nowa baza)
+        draftSubject = { name: "", questions: [], id: null };
         appContainer.innerHTML = `
         <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
             ${Controller.getThemeIcon()}
         </button>` + View.creator();
         Controller.initCreator();
+    },
+
+    // NOWE: Funkcja otwierająca kreator z danymi istniejącej bazy
+    editSubject: (id) => {
+        const db = getDatabase();
+        const subject = db.find(s => s.id === id);
+        if (!subject) return;
+
+        // Kopiujemy dane do draftu (głęboka kopia dla bezpieczeństwa)
+        draftSubject = JSON.parse(JSON.stringify(subject));
+
+        // Ładujemy widok kreatora
+        appContainer.innerHTML = `
+        <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">
+            ${Controller.getThemeIcon()}
+        </button>` + View.creator();
+
+        // Ustawiamy nazwę w formularzu
+        document.getElementById('new-subject-name').value = draftSubject.name;
+        
+        // Inicjalizujemy puste pola edytora pytania
+        Controller.initCreator();
+        
+        // Wyświetlamy listę pytań z załadowanej bazy
+        Controller.updateDraftList();
     },
 
     initCreator: () => {
@@ -88,7 +109,6 @@ const Controller = {
         for(let i = 0; i < 4; i++){
             answersWrap.innerHTML += View.answerInput(i);
         }
-        Controller.updateDraftList();
     },
 
     clearQuestionForm: () => {
@@ -204,10 +224,15 @@ const Controller = {
         if(draftSubject.questions.length === 0) { alert("Dodaj chociaż jedno pytanie!"); return; }
 
         draftSubject.name = nameInput;
-        draftSubject.id = "custom_" + Date.now(); 
+        
+        // ZMIANA: Jeśli draft nie ma ID (to nowa baza), generujemy nowe.
+        // Jeśli ma ID (to edycja), zostawiamy stare.
+        if (!draftSubject.id) {
+            draftSubject.id = "custom_" + Date.now(); 
+        }
 
-        saveNewSubject(draftSubject);
-        alert("Baza zapisana!");
+        saveNewSubject(draftSubject); // Funkcja w data.js teraz obsługuje aktualizację
+        alert("Zapisano zmiany!");
         Controller.goHome();
     },
 
@@ -216,7 +241,8 @@ const Controller = {
         if(draftSubject.questions.length === 0) { alert("Najpierw dodaj pytania!"); return; }
         
         draftSubject.name = nameInput || "BezNazwy";
-        draftSubject.id = "export_" + Date.now();
+        // Przy eksporcie generujemy ID exportowe, chyba że chcemy zachować ID
+        if (!draftSubject.id) draftSubject.id = "export_" + Date.now();
 
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(draftSubject));
         const downloadAnchorNode = document.createElement('a');
@@ -239,6 +265,12 @@ const Controller = {
 
                 draftSubject.name = json.name;
                 draftSubject.questions = json.questions;
+                // Jeśli wczytujemy plik do edycji, to traktujemy go jako nową bazę lub aktualizację
+                // Możemy przepisać ID z pliku jeśli chcemy nadpisać, lub wyczyścić ID żeby stworzyć kopię
+                // Tutaj przyjmujemy strategię: Edycja z pliku = potencjalnie nowa baza, chyba że user ją nadpisze
+                // Bezpieczniej jest wyczyścić ID, aby nie nadpisać przypadkiem innej bazy o tym samym ID (jeśli plik pochodzi od kogoś innego)
+                draftSubject.id = null; 
+
                 document.getElementById('new-subject-name').value = json.name;
                 Controller.updateDraftList();
                 Controller.clearQuestionForm();

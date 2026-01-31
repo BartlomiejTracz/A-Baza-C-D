@@ -7,15 +7,22 @@ export const View = {
         const percent = totalQ > 0 ? Math.floor((masteredCount / totalQ) * 100) : 0;
         
         const isCustom = subject.id.toString().startsWith('custom_') || subject.id.toString().startsWith('import_');
-        const deleteBtn = isCustom 
-            ? `<button class="btn-home-delete" onclick="event.stopPropagation(); window.app.deleteSubject('${subject.id}')">🗑</button>` 
-            : '';
+        
+        
+        let buttonsHtml = '';
+        if (isCustom) {
+            buttonsHtml = `
+            <div style="display:flex; gap:5px;">
+                <button class="btn-icon btn-edit-home" onclick="event.stopPropagation(); window.app.editSubject('${subject.id}')">✎</button>
+                <button class="btn-icon btn-delete-home" onclick="event.stopPropagation(); window.app.deleteSubject('${subject.id}')">🗑</button>
+            </div>`;
+        }
 
         return `
         <div class="card card-home" onclick="window.app.openSubject('${subject.id}')">
             <div style="display:flex; justify-content:space-between; align-items:flex-start">
-                <h3>${subject.name}</h3>
-                ${deleteBtn}
+                <h3 style="flex:1">${subject.name}</h3>
+                ${buttonsHtml}
             </div>
             <p>Baza: ${totalQ} pytań | Opanowano: ${percent}%</p>
             <div class="stats-bar"><div class="stats-fill" style="width: ${percent}%"></div></div>
