@@ -1,4 +1,4 @@
-import { getDatabase, saveNewSubject, markAsMastered, deleteSubject as deleteSubjectData } from './data.js';
+import { getDatabase, saveNewSubject, markAsMastered, getMasteredIds, deleteSubject as deleteSubjectData } from './data.js';
 import { QuizSession } from './quiz.js';
 import { View } from './view.js';
 
@@ -218,7 +218,12 @@ const Controller = {
     // --- QUIZ ---
     startQuiz: (subjectId, mode) => {
         const subject = getDatabase().find(s => s.id === subjectId);
-        currentSession = new QuizSession(subjectId, subject.questions, mode);
+        if (!subject) return;
+
+        // Teraz ta funkcja będzie już dostępna dzięki importowi powyżej
+        const mastered = getMasteredIds(subjectId); 
+        
+        currentSession = new QuizSession(subjectId, subject.questions, mode, mastered);
         Controller.renderCurrentQuestion();
     },
 
@@ -228,20 +233,41 @@ const Controller = {
 
     toggleSelection: (index) => {
         const checkbox = document.getElementById(`ans-${index}`);
+        if (!checkbox) return;
+
         checkbox.checked = !checkbox.checked;
         checkbox.parentElement.classList.toggle('selected', checkbox.checked);
+
+        // --- NOWA LOGIKA: Sprawdzanie czy cokolwiek jest zaznaczone ---
+        const anySelected = document.querySelectorAll('.quiz-check:checked').length > 0;
+        const submitBtn = document.getElementById('submit-answer-btn');
+        if (submitBtn) {
+            submitBtn.disabled = !anySelected;
+        }
     },
 
     handleAnswer: () => {
+        const submitBtn = document.getElementById('submit-answer-btn');
+
+        // DODATKOWE ZABEZPIECZENIE: Jeśli przycisk jest już wyłączony, przerywamy funkcję
+        if (!submitBtn || submitBtn.disabled) return;
+
         const selected = Array.from(document.querySelectorAll('.quiz-check'))
             .map((ch, i) => ch.checked ? i : null)
             .filter(v => v !== null);
 
+        if (selected.length === 0) return;
+
+        // BLOKADA: Natychmiastowe wyłączenie przycisku, aby zapobiec spamowaniu
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = "0.6";
+        submitBtn.textContent = "Czekaj..."; 
+
         const isCorrect = currentSession.submitAnswer(selected);
         const q = currentSession.getCurrentQuestion();
-        const checks = document.querySelectorAll('.quiz-check');
         const rows = document.querySelectorAll('.answer-option');
 
+        // Pokazywanie poprawnych/błędnych odpowiedzi (wizualizacja)
         rows.forEach((row, i) => {
             const isRowCorrect = q.correct.includes(i);
             const isRowSelected = selected.includes(i);
@@ -249,14 +275,19 @@ const Controller = {
             if (isRowCorrect) row.classList.add('btn-correct');
             else if (isRowSelected) row.classList.add('btn-wrong');
             
-            row.style.pointerEvents = 'none';
+            row.style.pointerEvents = 'none'; // Blokujemy klikanie w opcje podczas pauzy
         });
 
         if (isCorrect) markAsMastered(currentSession.subjectId, q.id);
 
+        // Odczekanie 2 sekund przed przejściem dalej
         setTimeout(() => {
-            if (currentSession.next()) Controller.renderCurrentQuestion();
-            else appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.results(currentSession);
+            if (currentSession.next()) {
+                Controller.renderCurrentQuestion();
+                // Nowe pytanie wygeneruje nowy przycisk, który domyślnie będzie disabled (z View.question)
+            } else {
+                appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.results(currentSession);
+            }
         }, 2000);
     },
 
@@ -265,36 +296,61 @@ const Controller = {
     },
     startCustomExam: (subjectId) => {
         const input = document.getElementById('exam-count-input');
-        const count = parseInt(input.value);
+        if (!input) return;
         
-        // Pobieramy przedmiot, żeby sprawdzić ile ma łącznie pytań
+        const count = parseInt(input.value);
         const subject = getDatabase().find(s => s.id === subjectId);
         if (!subject) return;
 
-        const maxQuestions = subject.questions.length;
-
-        // Walidacja
-        if (isNaN(count) || count < 1) {
-            alert("Podaj poprawną liczbę pytań (minimum 1).");
-            return;
-        }
-
-        if (count > maxQuestions) {
-            alert(`W bazie jest tylko ${maxQuestions} pytań! Zmniejsz liczbę.`);
-            // Automatycznie poprawiamy wpisaną wartość na max
-            input.value = maxQuestions;
-            return;
-        }
-
-        // Jeśli wszystko ok, odpalamy quiz z podaną liczbą
-        Controller.startQuiz(subjectId, count);
+        if (isNaN(count) || count < 1) return alert("Podaj poprawną liczbę!");
+        
+        // Jeśli wpisano więcej niż jest w bazie, ograniczamy do max
+        const finalCount = Math.min(count, subject.questions.length);
+        window.app.startQuiz(subjectId, finalCount);
     },
 
-    // ... funkcja startQuiz pozostaje bez zmian ...
     startQuiz: (subjectId, mode) => {
         const subject = getDatabase().find(s => s.id === subjectId);
-        currentSession = new QuizSession(subjectId, subject.questions, mode);
+        if (!subject) return;
+
+        const mastered = getMasteredIds(subjectId);
+        currentSession = new QuizSession(subjectId, subject.questions, mode, mastered);
         Controller.renderCurrentQuestion();
+    },
+
+    handleAnswer: () => {
+        const submitBtn = document.getElementById('submit-answer-btn');
+        // ZABEZPIECZENIE: Jeśli przycisk jest wyłączony (bo już kliknięto), nic nie rób
+        if (!submitBtn || submitBtn.disabled) return;
+
+        const selected = Array.from(document.querySelectorAll('.quiz-check'))
+            .map((ch, i) => ch.checked ? i : null)
+            .filter(v => v !== null);
+
+        if (selected.length === 0) return;
+
+        // BLOKADA: Wyłączamy przycisk do czasu następnego pytania
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Czekaj...";
+
+        const isCorrect = currentSession.submitAnswer(selected);
+        const q = currentSession.getCurrentQuestion();
+        const rows = document.querySelectorAll('.answer-option');
+
+        rows.forEach((row, i) => {
+            if (q.correct.includes(i)) row.classList.add('btn-correct');
+            else if (selected.includes(i)) row.classList.add('btn-wrong');
+            row.style.pointerEvents = 'none';
+        });
+
+        if (isCorrect) markAsMastered(currentSession.subjectId, q.id);
+
+        setTimeout(() => {
+            if (currentSession.next()) Controller.renderCurrentQuestion();
+            else {
+                appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.results(currentSession);
+            }
+        }, 2000);
     },
 };
 

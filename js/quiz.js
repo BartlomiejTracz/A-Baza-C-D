@@ -8,25 +8,34 @@ function shuffleArray(array) {
 }
 
 export class QuizSession {
-    constructor(subjectId, allQuestions, mode = 40) {
+    constructor(subjectId, allQuestions, mode = 40, masteredIds = []) {
         this.subjectId = subjectId;
         this.score = 0;
         this.currentIndex = 0;
         this.history = [];
 
+        // Usuwamy ewentualne duplikaty z bazy po ID
+        const uniquePool = Array.from(new Map(allQuestions.map(q => [q.id, q])).values());
+
         let selectedQuestions = [];
         if (mode === 'all') {
-            selectedQuestions = [...allQuestions];
+            selectedQuestions = [...uniquePool]; // W trybie nauki bierzemy wszystko bez losowania
         } else {
             const count = typeof mode === 'number' ? mode : 40;
-            selectedQuestions = shuffleArray(allQuestions).slice(0, count);
+            
+            // Logika unikania powtórek: dzielimy na nowe i opanowane
+            const unmastered = uniquePool.filter(q => !masteredIds.includes(q.id));
+            const mastered = uniquePool.filter(q => masteredIds.includes(q.id));
+
+            // Łączymy: najpierw przetasowane nowe, potem przetasowane stare
+            const combinedPool = [...shuffleArray(unmastered), ...shuffleArray(mastered)];
+            selectedQuestions = combinedPool.slice(0, count);
         }
 
         this.questions = selectedQuestions.map(q => this._scrambleAnswers(q));
     }
 
     _scrambleAnswers(originalQuestion) {
-        // Obsługa formatu tablicowego (nowy) i liczbowego (stary import)
         const correctIndices = Array.isArray(originalQuestion.correct) 
             ? originalQuestion.correct 
             : [originalQuestion.correct];
@@ -48,25 +57,15 @@ export class QuizSession {
         };
     }
 
-    getCurrentQuestion() {
-        return this.questions[this.currentIndex];
-    }
+    getCurrentQuestion() { return this.questions[this.currentIndex]; }
 
     submitAnswer(selectedIndices) {
         const q = this.getCurrentQuestion();
-        
-        // Sprawdzenie czy wybrane indeksy zgadzają się z poprawnymi
         const isCorrect = selectedIndices.length === q.correct.length && 
                           selectedIndices.every(idx => q.correct.includes(idx));
 
         if (isCorrect) this.score++;
-
-        this.history.push({
-            question: q,
-            userSelected: selectedIndices, // Teraz tablica
-            isCorrect: isCorrect
-        });
-
+        this.history.push({ question: q, userSelected: selectedIndices, isCorrect: isCorrect });
         return isCorrect;
     }
 

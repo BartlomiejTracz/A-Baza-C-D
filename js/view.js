@@ -77,9 +77,9 @@ export const View = {
         const current = quizSession.currentIndex + 1;
         const total = quizSession.questions.length;
 
-        const isMulti = q.correct.length > 1;
+        // Możesz usunąć tę linię, jeśli nie jest używana nigdzie indziej
+        // const isMulti = q.correct.length > 1; 
 
-        // Zabezpieczamy treść odpowiedzi i treść pytania
         let answersHtml = q.answers.map((ans, idx) => `
             <div class="answer-option" onclick="window.app.toggleSelection(${idx})">
                 <input type="checkbox" id="ans-${idx}" class="quiz-check">
@@ -90,7 +90,7 @@ export const View = {
         return `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
             <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${window.app.getThemeIcon()}</button>
-            <span>Pytanie ${current}/${total} ${isMulti ? '(Wielokrotny wybór)' : ''}</span>
+            <span>Pytanie ${current}/${total}</span>
             <button class="btn" style="background:#6c757d; padding:8px 12px; font-size:14px" onclick="window.app.goHome()">Wyjdź</button>
         </div>
         <div style="display:flex; justify-content:flex-end; margin-bottom:10px">
@@ -98,7 +98,7 @@ export const View = {
         </div>
         <div class="card"><h3>${escapeHTML(q.text)}</h3></div>
         <div id="answers-container">${answersHtml}</div>
-        <button class="btn" style="background:#2ecc71; margin-top:20px" onclick="window.app.handleAnswer()">Zatwierdź odpowiedź</button>
+        <button id="submit-answer-btn" class="btn" style="background:#2ecc71; margin-top:20px" onclick="window.app.handleAnswer()" disabled>Zatwierdź odpowiedź</button>
         `;
     },
 
