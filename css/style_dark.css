@@ -242,3 +242,17 @@ body.dark-mode .answer-option.selected {
     background-color: #1a3a5a;
     border-color: #3d8cd6;
 }
+
+.app-footer {
+    max-width: 600px;
+    margin: 40px auto 20px auto; /* Odstęp od góry i dołu */
+    text-align: center;
+    border-top: 1px solid #ddd;  /* Delikatna linia oddzielająca */
+    padding-top: 20px;
+    color: #7f8c8d;              /* Szary, dyskretny kolor tekstu */
+    font-size: 14px;
+}
+
+.app-footer p {
+    margin: 5px 0;
+}

@@ -227,3 +227,17 @@ input[type="radio"] {
     margin-right: 15px;
     pointer-events: none; /* Klikamy w cały wiersz */
 }
+
+.app-footer {
+    max-width: 600px;
+    margin: 40px auto 20px auto;
+    text-align: center;
+    border-top: 1px solid #333;  /* Ciemniejsza linia */
+    padding-top: 20px;
+    color: #666;                 /* Ciemniejszy szary tekst */
+    font-size: 14px;
+}
+
+.app-footer p {
+    margin: 5px 0;
+}
