@@ -231,6 +231,16 @@ const Controller = {
         appContainer.innerHTML = View.question(currentSession);
     },
 
+    // --- NOWA FUNKCJA: Restart tej samej sesji bez ponownego losowania ---
+    restartQuiz: () => {
+        if (!currentSession) return;
+        // Zresetuj statystyki i historię, ale zachowaj tę samą listę pytań (i ich kolejność)
+        currentSession.score = 0;
+        currentSession.currentIndex = 0;
+        currentSession.history = [];
+        Controller.renderCurrentQuestion();
+    },
+
     toggleSelection: (index) => {
         const checkbox = document.getElementById(`ans-${index}`);
         if (!checkbox) return;

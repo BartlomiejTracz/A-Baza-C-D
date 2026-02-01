@@ -143,7 +143,10 @@ export const View = {
         <h1>Wynik: ${percent}%</h1>
         <div class="card">Poprawne: ${quizSession.score} / ${total}</div>
         ${errorsHtml}
-        <button class="btn" onclick="window.app.goHome()">Menu Główne</button>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn" style="background:#17a2b8; flex:1" onclick="window.app.restartQuiz()">🔁 Powtórz (Restart)</button>
+            <button class="btn" style="flex:1" onclick="window.app.goHome()">Menu Główne</button>
+        </div>
         `;
     },
 
