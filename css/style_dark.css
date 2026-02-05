@@ -256,3 +256,36 @@ body.dark-mode .answer-option.selected {
 .app-footer p {
     margin: 5px 0;
 }
+
+/* style_dark.css */
+
+.sticky-header {
+    position: -webkit-sticky; /* Wsparcie dla Safari */
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+    background-color: #121212; /* Tło musi być identyczne jak body w dark mode */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #333;
+}
+
+/* Styl przycisku powrotu wewnątrz nagłówka */
+.back-btn-top {
+    width: auto !important;
+    margin: 0 !important;
+    padding: 8px 20px !important;
+    font-size: 14px;
+    background-color: #3d8cd6; /* Niebieski z dark mode */
+}
+
+/* Styl ikony motywu wewnątrz nagłówka */
+.sticky-theme {
+    position: static !important; /* Wyłączenie absolute, by flexbox go ustawił */
+    margin: 0;
+    background: transparent;
+    border: 2px solid #555;
+    color: #e0e0e0;
+}

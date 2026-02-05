@@ -207,50 +207,41 @@ export const View = {
     studyList(subject) {
         const listHtml = subject.questions.map((q, index) => {
             const safeText = escapeHTML(q.text);
-            
             const answersHtml = q.answers.map((ans, aIdx) => {
                 const isCorrect = q.correct.includes(aIdx);
-                
                 const style = isCorrect 
                     ? 'border: 1px solid #2ecc71; color:#2ecc71; font-weight:bold; background:rgba(46, 204, 113, 0.1); border-radius:4px; padding:4px 8px; margin-bottom: 5px; display:block;' 
                     : 'border: 1px solid transparent; color: inherit; opacity: 0.7; padding:4px 8px; margin-bottom: 5px; display:block;';
-                
-                const icon = isCorrect ? '✅' : '⚪';
-                
-                return `<div style="${style}">
-                    <span style="margin-right:8px">${icon}</span> ${escapeHTML(ans)}
-                </div>`;
+                return `<div style="${style}"><span style="margin-right:8px">${isCorrect ? '✅' : '⚪'}</span> ${escapeHTML(ans)}</div>`;
             }).join('');
 
             return `
             <div class="card" style="border-left: 5px solid #2ecc71;">
                 <h3 style="margin-top:0; margin-bottom:10px; color:#3d8cd6; font-size: 0.9em; text-transform:uppercase; letter-spacing:1px;">Pytanie ${index + 1}</h3>
                 <p style="font-size:1.1em; font-weight:500; margin-bottom:15px; margin-top:0;">${safeText}</p>
-                <div style="border-top:1px solid #444; padding-top:10px; margin-top:10px;">
-                    ${answersHtml}
-                </div>
+                <div style="border-top:1px solid #444; padding-top:10px; margin-top:10px;">${answersHtml}</div>
             </div>`;
         }).join('');
 
         return `
-        <button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${window.app.getThemeIcon()}</button>
-        
-        <div style="margin-bottom: 20px; padding-right: 60px;">
+        <div class="sticky-header">
+            <button class="btn back-btn-top" onclick="window.app.openSubject('${subject.id}')">
+                ← Wróć
+            </button>
+            <button class="theme-toggle-btn sticky-theme" onclick="window.app.toggleTheme()">
+                ${window.app.getThemeIcon()}
+            </button>
+        </div>
+
+        <div style="margin: 20px 0; padding-top: 10px;">
             <h2 style="margin:0; font-size: 1.5em;">Przegląd Bazy</h2>
             <p style="margin:5px 0; opacity:0.8;">${escapeHTML(subject.name)}</p>
         </div>
 
-        <button class="btn" style="background:#6c757d; margin-bottom: 20px;" onclick="window.app.openSubject('${subject.id}')">
-            ← Wróć do menu
-        </button>
-
         <div style="padding-bottom:50px">
             ${listHtml}
         </div>
-        
-        <button class="btn" style="width:100%; background:#6c757d; margin-top:20px" onclick="window.app.openSubject('${subject.id}')">
-            ← Wróć na górę
-        </button>
         `;
     }
+
 };

@@ -114,6 +114,7 @@ const Controller = {
         document.getElementById('draft-list').innerHTML = draftSubject.questions.length ? 
             draftSubject.questions.map((q, idx) => View.draftItem(q, idx)).join('') : 
             '<p style="padding:10px; opacity:0.7">Brak pytań.</p>';
+        Controller.renderMath();
     },
 
     editDraftQuestion: (index) => {
@@ -205,6 +206,7 @@ const Controller = {
         if (!subject) return;
         appContainer.innerHTML = View.studyList(subject);
         window.scrollTo(0, 0);
+        Controller.renderMath();
     },
 
     deleteSubject: (id) => {
@@ -237,6 +239,7 @@ const Controller = {
 
     renderCurrentQuestion: () => {
         appContainer.innerHTML = View.question(currentSession);
+        Controller.renderMath();
     },
 
     restartQuiz: () => {
@@ -258,6 +261,18 @@ const Controller = {
         const submitBtn = document.getElementById('submit-answer-btn');
         if (submitBtn) {
             submitBtn.disabled = !anySelected;
+        }
+    },
+
+    renderMath: () => {
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(appContainer, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
+            });
         }
     },
 
@@ -296,6 +311,7 @@ const Controller = {
                 Controller.renderCurrentQuestion();
             } else {
                 appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.results(currentSession);
+                Controller.renderMath();
             }
         }, 2000);
     },
