@@ -4,6 +4,7 @@ import { View } from './view.js';
 
 const appContainer = document.getElementById('app');
 let currentSession = null; 
+let editingIndex = null; // ZMIENNA POMOCNICZA DO EDYCJI
 
 let draftSubject = {
     name: "",
@@ -53,6 +54,7 @@ const Controller = {
     // --- KREATOR ---
     openCreator: () => {
         draftSubject = { name: "", questions: [], id: null };
+        editingIndex = null; // RESETUJEMY INDEX PRZY OTWARCIU KREATORA
         appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.creator();
         Controller.initCreator();
     },
@@ -62,6 +64,7 @@ const Controller = {
         const subject = db.find(s => s.id === id);
         if (!subject) return;
         draftSubject = JSON.parse(JSON.stringify(subject));
+        editingIndex = null; // RESETUJEMY INDEX PRZY OTWARCIU EDYCJI BAZY
         appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.creator();
         document.getElementById('new-subject-name').value = draftSubject.name;
         Controller.updateDraftList();
@@ -103,7 +106,20 @@ const Controller = {
             return;
         }
 
-        draftSubject.questions.push({ id: Date.now(), text: qText, answers, correct });
+        // Jeśli edytujemy, zachowaj stare ID, jeśli nowe - generuj
+        const qId = (editingIndex !== null) ? draftSubject.questions[editingIndex].id : Date.now();
+
+        const questionObj = { id: qId, text: qText, answers, correct };
+
+        if (editingIndex !== null) {
+            // AKTUALIZACJA W MIEJSCU
+            draftSubject.questions[editingIndex] = questionObj;
+            editingIndex = null; // Resetujemy po zapisie
+        } else {
+            // DODANIE NA KONIEC
+            draftSubject.questions.push(questionObj);
+        }
+
         document.getElementById('q-text').value = '';
         Controller.initCreator();
         Controller.updateDraftList();
@@ -119,15 +135,29 @@ const Controller = {
 
     editDraftQuestion: (index) => {
         const q = draftSubject.questions[index];
+        editingIndex = index; // ZAPAMIĘTUJEMY KTÓRE PYTANIE EDYTUJEMY
+        
         document.getElementById('q-text').value = q.text;
         const answersWrap = document.getElementById('answers-wrap');
         answersWrap.innerHTML = '';
         q.answers.forEach((ans, i) => Controller.addAnswerField(ans, q.correct.includes(i)));
-        draftSubject.questions.splice(index, 1);
-        Controller.updateDraftList();
+        
+        // NIE USUWAMY PYTANIA Z LISTY, TYLKO WCZYTUJEMY JE DO FORMULARZA
+        // Przewiń do góry, żeby użytkownik widział formularz
+        document.querySelector('.card').scrollIntoView({behavior: 'smooth'});
     },
 
     deleteDraftQuestion: (index) => {
+        // Jeśli usuwamy pytanie, które akurat edytujemy, resetujemy edycję
+        if (editingIndex === index) {
+            editingIndex = null;
+            document.getElementById('q-text').value = '';
+            Controller.initCreator();
+        } else if (editingIndex !== null && index < editingIndex) {
+            // Jeśli usuwamy pytanie powyżej edytowanego, przesuwamy indeks edycji
+            editingIndex--;
+        }
+
         draftSubject.questions.splice(index, 1);
         Controller.updateDraftList();
     },
@@ -167,6 +197,7 @@ const Controller = {
                 }
                 draftSubject = { name: json.name, questions: json.questions, id: null };
                 document.getElementById('new-subject-name').value = json.name;
+                editingIndex = null; // Resetujemy index
                 Controller.updateDraftList();
                 input.value = ''; 
                 alert(`Wczytano bazę: ${json.name}`);

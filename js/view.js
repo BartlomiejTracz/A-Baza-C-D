@@ -191,8 +191,10 @@ export const View = {
         const safeText = escapeHTML(question.text);
         const correctAnswers = question.correct.map(i => escapeHTML(question.answers[i])).join(', ');
         
+        // ZACHOWANO ORYGINALNE KLASY PRZYCISKÓW (btn-edit, btn-delete)
+        // DODANO: cursor: default; transform: none !important; - aby karta nie klikała się cała
         return `
-        <div class="card draft-item" style="padding:10px;">
+        <div class="card" style="padding:10px; cursor: default; transform: none !important;">
             <div style="font-weight:bold; margin-bottom:5px">${index + 1}. ${safeText}</div>
             <div style="font-size:0.9em;">
                 Poprawne: <strong class="correct-answer">${correctAnswers}</strong>
