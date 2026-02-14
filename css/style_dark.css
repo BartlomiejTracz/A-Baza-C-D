@@ -36,7 +36,12 @@ h3 { font-size: 18px; margin-top: 0; color: #b0b3b8; }
     color: #ffffff;
 }
 
-.card:active { transform: scale(0.98); }
+.card:active {
+    transform: none; /* Efekt wciśnięcia */
+}
+.card-home:active {
+    transform: scale(0.98);
+}
 
 /* 3. PRZYCISKI */
 .btn {

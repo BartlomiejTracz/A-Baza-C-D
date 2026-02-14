@@ -33,7 +33,10 @@ h3 { font-size: 18px; margin-top: 0; color: #34495e; }
 }
 
 .card:active {
-    transform: scale(0.98); /* Efekt wciśnięcia */
+    transform: none; /* Efekt wciśnięcia */
+}
+.card-home:active {
+    transform: scale(0.98);
 }
 
 /* 4. PRZYCISKI (Duże pod palec!) */
