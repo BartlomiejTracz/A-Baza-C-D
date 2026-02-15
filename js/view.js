@@ -79,11 +79,8 @@ export const View = {
         const q = quizSession.getCurrentQuestion();
         const current = quizSession.currentIndex + 1;
         const total = quizSession.questions.length;
-
-        // --- ZMIANA: Ukrywanie punktów w trybie egzaminu (gdy mode jest liczbą) ---
         const isExam = typeof quizSession.mode === 'number';
         const scoreHtml = isExam ? '' : `<span>Punkty: ${quizSession.score}</span>`;
-        // --------------------------------------------------------------------------
 
         let answersHtml = q.answers.map((ans, idx) => `
             <div class="answer-option" onclick="window.app.toggleSelection(${idx})">
@@ -110,43 +107,72 @@ export const View = {
     results(quizSession) {
         const total = quizSession.questions.length;
         const percent = Math.round((quizSession.score / total) * 100);
-        const errors = quizSession.history.filter(h => !h.isCorrect);
-        let errorsHtml = errors.length > 0 ? '<h3>Błędy:</h3>' : '<h3 style="color:green">Brak błędów!</h3>';
+        
+        // Zamiast filtrować błędy, bierzemy całą historię
+        let resultsHtml = '';
 
-        errors.forEach(item => {
-            const userAnsList = item.userSelected
-                .map(i => `<li style="margin-left: 15px;">• ${escapeHTML(item.question.answers[i])}</li>`)
+        quizSession.history.forEach(({ isCorrect, userSelected, question }, index) => {
+            
+            // Stylizacja kart w zależności od poprawności
+            const borderColor = isCorrect ? '#2ecc71' : '#dc3545'; // zielony lub czerwony
+            const resultClass = isCorrect ? 'result-correct-card' : 'result-wrong-card';
+            const icon = isCorrect ? '✅' : '❌';
+
+            const userAnsList = userSelected
+                .map(i => `<li style="margin-left: 15px;">• ${escapeHTML(question.answers[i])}</li>`)
                 .join('');
                 
-            const correctAnsList = item.question.correct
-                .map(i => `<li style="margin-left: 15px;">• ${escapeHTML(item.question.answers[i])}</li>`)
+            const correctAnsList = question.correct
+                .map(i => `<li style="margin-left: 15px;">• ${escapeHTML(question.answers[i])}</li>`)
                 .join('');
 
-            const userAnsDisplay = item.userSelected.length > 0 
-                ? `<ul style="list-style: none; padding: 0; margin: 5px 0; color: #e74c3c;">${userAnsList}</ul>` 
-                : '<span style="color:red">Brak</span>';
+            const userAnsDisplay = userSelected.length > 0 
+                ? `<ul style="list-style: none; padding: 0; margin: 5px 0; color: ${isCorrect ? '#2ecc71' : '#e74c3c'};">${userAnsList}</ul>` 
+                : '<span style="color:red">Brak odpowiedzi</span>';
 
             const correctAnsDisplay = `<ul style="list-style: none; padding: 0; margin: 5px 0; color: #2ecc71;">${correctAnsList}</ul>`;
             
-            errorsHtml += `
-            <div class="card" style="border-left: 5px solid #dc3545">
-                <p><strong>${escapeHTML(item.question.text)}</strong></p>
+            resultsHtml += `
+            <div class="card ${resultClass}" style="border-left: 5px solid ${borderColor}; position:relative;">
+                <div style="position:absolute; right:10px; top:10px; font-size:1.2em;">${icon}</div>
+                <p style="margin-right:25px"><strong>${index + 1}. ${escapeHTML(question.text)}</strong></p>
+                
                 <div style="margin-bottom: 10px;">
-                    <p style="color:red; font-weight: bold; margin-bottom: 2px;">Twoje odpowiedzi:</p>
+                    <p style="font-size:0.9em; opacity:0.8; margin-bottom: 2px;">Twoje odpowiedzi:</p>
                     ${userAnsDisplay}
                 </div>
-                <div>
-                    <p style="color:green; font-weight: bold; margin-bottom: 2px;">Poprawne odpowiedzi:</p>
+                ${isCorrect ? '' : `
+                <div style="border-top:1px solid #444; padding-top:5px">
+                    <p style="font-size:0.9em; opacity:0.8; margin-bottom: 2px;">Poprawne odpowiedzi:</p>
                     ${correctAnsDisplay}
-                </div>
+                </div>`}
             </div>`;
         });
 
+        // Styl CSS do ukrywania poprawnych odpowiedzi
+        const styleBlock = `
+        <style>
+            .hide-correct .result-correct-card { display: none; }
+        </style>`;
+
         return `
+        ${styleBlock}
         <h1>Wynik: ${percent}%</h1>
-        <div class="card">Poprawne: ${quizSession.score} / ${total}</div>
-        ${errorsHtml}
-        <div style="display:flex; gap:10px; margin-top:15px;">
+        <div class="card">
+            Poprawne: ${quizSession.score} / ${total}
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <button id="toggle-results-btn" class="btn" style="background:#f1c40f; color:#333; width:100%" onclick="window.app.toggleResultsView()">
+                Ukryj poprawne odpowiedzi
+            </button>
+        </div>
+
+        <div id="results-list">
+            ${resultsHtml}
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:25px;">
             <button class="btn" style="background:#17a2b8; flex:1" onclick="window.app.restartQuiz()">🔁 Powtórz (Restart)</button>
             <button class="btn" style="flex:1" onclick="window.app.goHome()">Menu Główne</button>
         </div>

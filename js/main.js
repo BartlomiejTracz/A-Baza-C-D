@@ -231,7 +231,6 @@ const Controller = {
         if(subject) appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.subjectDetails(subject);
     },
 
-    // NOWA FUNKCJA: Otwieranie widoku nauki (listy pytań)
     openStudyReview: (id) => {
         const subject = getDatabase().find(s => s.id === id);
         if (!subject) return;
@@ -295,6 +294,24 @@ const Controller = {
         }
     },
 
+    // NOWA FUNKCJA DO OBSŁUGI PRZYCISKU WYNIKÓW
+    toggleResultsView: () => {
+        const list = document.getElementById('results-list');
+        const btn = document.getElementById('toggle-results-btn');
+        
+        if (list.classList.contains('hide-correct')) {
+            list.classList.remove('hide-correct');
+            btn.textContent = "Ukryj poprawne odpowiedzi";
+            btn.style.background = "#f1c40f"; // żółty
+            btn.style.color = "#333";
+        } else {
+            list.classList.add('hide-correct');
+            btn.textContent = "Pokaż wszystkie odpowiedzi";
+            btn.style.background = "#3498db"; // niebieski
+            btn.style.color = "white";
+        }
+    },
+
     renderMath: () => {
         if (typeof renderMathInElement === 'function') {
             renderMathInElement(appContainer, {
@@ -317,7 +334,6 @@ const Controller = {
 
         if (selected.length === 0) return;
 
-        // Blokujemy przycisk na chwilę (ważne dla obu trybów, żeby nie klikać 2x)
         submitBtn.disabled = true;
 
         const isCorrect = currentSession.submitAnswer(selected);
@@ -325,13 +341,10 @@ const Controller = {
 
         if (isCorrect) markAsMastered(currentSession.subjectId, q.id);
 
-        // --- ROZDZIELENIE LOGIKI ---
-        // Jeśli mode jest liczbą (np. 40), to jest to Egzamin -> bez podpowiedzi
-        // Jeśli mode to 'all', to jest to Nauka -> z kolorami
         const isExamMode = typeof currentSession.mode === 'number';
 
         if (isExamMode) {
-            // TRYB EGZAMINU: Nie pokazujemy kolorów, od razu następne
+            // TRYB EGZAMINU: Szybkie przejście
             if (currentSession.next()) {
                 Controller.renderCurrentQuestion();
             } else {
@@ -339,7 +352,7 @@ const Controller = {
                 Controller.renderMath();
             }
         } else {
-            // TRYB NAUKI: Stara logika (kolory + opóźnienie)
+            // TRYB NAUKI: Kolory i opóźnienie
             submitBtn.style.opacity = "0.6";
             submitBtn.textContent = "Czekaj..."; 
 
