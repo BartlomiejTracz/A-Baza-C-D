@@ -13,6 +13,7 @@ export class QuizSession {
         this.score = 0;
         this.currentIndex = 0;
         this.history = [];
+        this.mode = mode; // <--- ZMIANA: Zapisujemy tryb, aby rozróżnić Egzamin (number) od Nauki ('all')
 
         // Usuwamy ewentualne duplikaty z bazy po ID
         const uniquePool = Array.from(new Map(allQuestions.map(q => [q.id, q])).values());

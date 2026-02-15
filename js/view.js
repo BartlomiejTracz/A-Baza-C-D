@@ -80,6 +80,11 @@ export const View = {
         const current = quizSession.currentIndex + 1;
         const total = quizSession.questions.length;
 
+        // --- ZMIANA: Ukrywanie punktów w trybie egzaminu (gdy mode jest liczbą) ---
+        const isExam = typeof quizSession.mode === 'number';
+        const scoreHtml = isExam ? '' : `<span>Punkty: ${quizSession.score}</span>`;
+        // --------------------------------------------------------------------------
+
         let answersHtml = q.answers.map((ans, idx) => `
             <div class="answer-option" onclick="window.app.toggleSelection(${idx})">
                 <input type="checkbox" id="ans-${idx}" class="quiz-check">
@@ -94,7 +99,7 @@ export const View = {
             <button class="btn" style="background:#6c757d; padding:8px 12px; font-size:14px" onclick="window.app.goHome()">Wyjdź</button>
         </div>
         <div style="display:flex; justify-content:flex-end; margin-bottom:10px">
-            <span>Punkty: ${quizSession.score}</span>
+            ${scoreHtml}
         </div>
         <div class="card"><h3>${escapeHTML(q.text)}</h3></div>
         <div id="answers-container">${answersHtml}</div>
@@ -191,8 +196,6 @@ export const View = {
         const safeText = escapeHTML(question.text);
         const correctAnswers = question.correct.map(i => escapeHTML(question.answers[i])).join(', ');
         
-        // ZACHOWANO ORYGINALNE KLASY PRZYCISKÓW (btn-edit, btn-delete)
-        // DODANO: cursor: default; transform: none !important; - aby karta nie klikała się cała
         return `
         <div class="card" style="padding:10px; cursor: default; transform: none !important;">
             <div style="font-weight:bold; margin-bottom:5px">${index + 1}. ${safeText}</div>
@@ -245,5 +248,4 @@ export const View = {
         </div>
         `;
     }
-
 };

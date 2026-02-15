@@ -317,34 +317,52 @@ const Controller = {
 
         if (selected.length === 0) return;
 
+        // Blokujemy przycisk na chwilę (ważne dla obu trybów, żeby nie klikać 2x)
         submitBtn.disabled = true;
-        submitBtn.style.opacity = "0.6";
-        submitBtn.textContent = "Czekaj..."; 
 
         const isCorrect = currentSession.submitAnswer(selected);
         const q = currentSession.getCurrentQuestion();
-        const rows = document.querySelectorAll('.answer-option');
-
-        rows.forEach((row, i) => {
-            const isRowCorrect = q.correct.includes(i);
-            const isRowSelected = selected.includes(i);
-            
-            if (isRowCorrect) row.classList.add('btn-correct');
-            else if (isRowSelected) row.classList.add('btn-wrong');
-            
-            row.style.pointerEvents = 'none';
-        });
 
         if (isCorrect) markAsMastered(currentSession.subjectId, q.id);
 
-        setTimeout(() => {
+        // --- ROZDZIELENIE LOGIKI ---
+        // Jeśli mode jest liczbą (np. 40), to jest to Egzamin -> bez podpowiedzi
+        // Jeśli mode to 'all', to jest to Nauka -> z kolorami
+        const isExamMode = typeof currentSession.mode === 'number';
+
+        if (isExamMode) {
+            // TRYB EGZAMINU: Nie pokazujemy kolorów, od razu następne
             if (currentSession.next()) {
                 Controller.renderCurrentQuestion();
             } else {
                 appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.results(currentSession);
                 Controller.renderMath();
             }
-        }, 2000);
+        } else {
+            // TRYB NAUKI: Stara logika (kolory + opóźnienie)
+            submitBtn.style.opacity = "0.6";
+            submitBtn.textContent = "Czekaj..."; 
+
+            const rows = document.querySelectorAll('.answer-option');
+            rows.forEach((row, i) => {
+                const isRowCorrect = q.correct.includes(i);
+                const isRowSelected = selected.includes(i);
+                
+                if (isRowCorrect) row.classList.add('btn-correct');
+                else if (isRowSelected) row.classList.add('btn-wrong');
+                
+                row.style.pointerEvents = 'none';
+            });
+
+            setTimeout(() => {
+                if (currentSession.next()) {
+                    Controller.renderCurrentQuestion();
+                } else {
+                    appContainer.innerHTML = `<button class="theme-toggle-btn" onclick="window.app.toggleTheme()">${Controller.getThemeIcon()}</button>` + View.results(currentSession);
+                    Controller.renderMath();
+                }
+            }, 2000);
+        }
     },
 };
 
